@@ -1,0 +1,33 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: grit_ai
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  my-express-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://postgres:mysecretpassword@postgres:5432/grit_ai
+    ports:
+      - "3030:3030"
+    restart: always
+    depends_on:
+      - postgres
+    command: >
+      bash -c "
+        npx prisma db push &&
+        npx ts-node /app/prisma/seed.ts &&
+        node dist/index.js
+      "
+
+volumes:
+  postgres_data:

@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Categories {
+  id            String       @id @default(uuid()) @db.Uuid
+  category_name String
+}
+
+model Books {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  book_name     String
+  category_ids  String[]  @db.Uuid
+  page          Int
+  qty           Int
+  loanRecord    LoanRecord[]
+}
+
+model Users {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(20)
+  email       String   @unique @db.VarChar(255)
+  password    String   @db.Text
+  role        UserRole @default(borrower)
+  loanRecord  LoanRecord[]
+}
+
+enum UserRole {
+  admin
+  borrower
+}
+
+model LoanRecord {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  borrow_date        DateTime   @default(now())
+  return_date        DateTime?
+  loan_duration_days Int
+  users              Users       @relation(fields: [user_id], references: [id])
+  user_id            String      @default(uuid()) @db.Uuid
+  books              Books       @relation(fields: [book_id], references: [id])
+  book_id            String      @default(uuid()) @db.Uuid
+}
